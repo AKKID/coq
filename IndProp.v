@@ -1031,7 +1031,7 @@ Qed.
 
 Example reg_exp_ex2 : [1; 2] =~ App (Char 1) (Char 2).
 Proof.
-  apply (MApp [1] _ [2]).
+  apply (MApp [1] _ [2] _).
   - apply MChar.
   - apply MChar.
 Qed.
@@ -1059,6 +1059,8 @@ Fixpoint reg_exp_of_list {T} (l : list T) :=
   | [] => EmptyStr
   | x :: l' => App (Char x) (reg_exp_of_list l')
   end.
+  
+  Compute (reg_exp_of_list [1;2;3]).
 
 Example reg_exp_ex4 : [1; 2; 3] =~ reg_exp_of_list [1; 2; 3].
 Proof.
@@ -1146,19 +1148,37 @@ Qed.
     specification: *)
 
 
-Lemma reg_exp_of_list_spec : forall T (s1 s2 : list T),
-  s1 =~ reg_exp_of_list s2 <-> s1 = s2.
+Lemma reg_exp_of_list_spec_fw: forall T (l1 l2 : list T),
+  l1 =~ reg_exp_of_list l2 -> l1 = l2.
 Proof.
-  intros T s1 s2.
+  intros T l1 l2. generalize dependent l1.
+  induction l2.
+  - intros. simpl in H. inversion H. reflexivity.
+  - intros. simpl in H. inversion H. inversion H3.
+   Search app. simpl. apply IHl2 in H4. rewrite H4. reflexivity.
+Qed.
+
+Lemma reg_exp_list_spec_bwd: forall T (l1 l2:list T), 
+  l1 = l2 -> l1 =~ reg_exp_of_list l2.
+Proof.
+  intros T l1 l2. generalize dependent l1.
+  induction l2.
+  - intros. simpl. rewrite H. apply MEmpty.
+  - intros.  inversion H. rewrite Lapp. apply (MApp [x] _ l2).
+    { apply MChar. } { apply IHl2. reflexivity. }
+Qed.
+ 
+Lemma reg_exp_of_list_spec : forall T (l1 l2 : list T),
+  l1 =~ reg_exp_of_list l2 <-> l1 = l2.
+Proof.
+  intros T l1 l2. generalize dependent l1.
   split.
-  - intros H. inversion H.
-    +  destruct s2.
-        { reflexivity. } { inversion H2. }
-    +  destruct s2.
-        { inversion H2. }
-        { inversion H2. }
-    +  
-    Admitted.
+  - apply reg_exp_of_list_spec_fw.
+  - apply reg_exp_list_spec_bwd.
+Qed.
+  
+  
+
 (** [] *)
 
 (** Since the definition of [exp_match] has a recursive
@@ -1239,14 +1259,88 @@ Qed.
 (** Write a recursive function [re_not_empty] that tests whether a
     regular expression matches some string. Prove that your function
     is correct. *)
+    Check ( true ||  false).
+    
+   (* Fixpoint re_not_empty {T : Type} (re : @reg_exp T) : bool :=
+  match re with
+  | EmptySet => false
+  | EmptyStr => true
+  | (Char _) => true
+  | App r1 r2 => re_not_empty r1 || re_not_empty r2
+  | Union r1 r2 => re_not_empty r1 || re_not_empty r2
+  | Star r1=> true
+  end.*)
 
-Fixpoint re_not_empty {T : Type} (re : @reg_exp T) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint re_not_empty {T : Type} (re : @reg_exp T) : bool :=
+  match re with
+    | EmptySet => false
+    | EmptyStr => true
+    | (Char _) => true
+    | App r1 r2 => re_not_empty r1 && re_not_empty r2
+    | Union r1 r2 => re_not_empty r1 || re_not_empty r2
+    | Star r1 => true
+  end.
+
+Lemma re_not_empty_correct_fwd: forall T (re : @reg_exp T),
+    (exists s, s =~ re) -> re_not_empty re = true.
+Proof.
+  intros. destruct H as [x E].
+  induction E.
+  - reflexivity.
+  - reflexivity.
+  - simpl. Search orb. rewrite andb_true_iff. split. { apply IHE1. }{ apply IHE2. }
+  - simpl. rewrite orb_true_iff. left. apply IHE.
+  - simpl. rewrite orb_true_iff. right. apply IHE.
+  - reflexivity.
+  - apply IHE2.
+Qed.
+(*
+Lemma re_not_empty_correct_fwd: forall T (re : @reg_exp T),
+    (exists s, s =~ re) -> re_not_empty re = true.
+Proof.
+  intros. destruct H as [x E].
+  induction E.
+  - reflexivity.
+  - reflexivity.
+  - simpl. Search orb. rewrite orb_true_iff. left. apply IHE1.
+  - simpl. rewrite orb_true_iff. left. apply IHE.
+  - simpl. rewrite orb_true_iff. right. apply IHE.
+  - reflexivity.
+  - apply IHE2.
+Qed.
+*)
+
+Lemma re_not_empty_correct_bwd: forall T (re: @reg_exp T),
+  (re_not_empty re = true) -> exists s, s =~ re.
+Proof.
+  intros T re H.
+  induction re.
+  - inversion H.
+  - exists []. apply MEmpty.
+  - exists [t]. apply MChar.
+  - simpl in H. rewrite andb_true_iff in H. destruct H as [H1  H2].
+    apply IHre1 in H1. apply IHre2 in H2.
+    destruct H1 as [x E0].
+    destruct H2 as [x' E1].
+    exists (x ++ x').
+    apply MApp.
+    + apply E0.
+    + apply E1.
+  - simpl in H. rewrite orb_true_iff in H. destruct H as [Hl | Hr].
+    + apply IHre1 in Hl. destruct Hl as [x E]. exists x. apply MUnionL. apply E.
+    + apply IHre2 in Hr. destruct Hr as [x E]. exists x. apply MUnionR. apply E.
+  - exists []. apply MStar0.
+Qed.
+    
 
 Lemma re_not_empty_correct : forall T (re : @reg_exp T),
   (exists s, s =~ re) <-> re_not_empty re = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  split.
+  - apply re_not_empty_correct_fwd.
+  - apply re_not_empty_correct_bwd.
+Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -1467,6 +1561,8 @@ Proof.
        | re | s1 s2 re Hmatch1 IH1 Hmatch2 IH2 ].
   - (* MEmpty *)
     simpl. omega.
+  - simpl. omega.
+  - simpl. intros.
   (* FILL IN HERE *) Admitted.
 
 End Pumping.
@@ -1539,9 +1635,14 @@ Qed.
 (** **** Exercise: 2 stars, recommended (reflect_iff)  *)
 Theorem reflect_iff : forall P b, reflect P b -> (P <-> b = true).
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
-
+  destruct b.
+  - intros. split. + intros;reflexivity. + intros. inversion H. apply H1.
+  
+  - intros. split. + intros. inversion H. * Search (_ /\ ~_).
+    apply (contradiction_implies_anything P). split. { apply H0. } { apply H1. }
+    + intros. inversion H0.
+Qed.
+      
 (** The advantage of [reflect] over the normal "if and only if"
     connective is that, by destructing a hypothesis or lemma of the
     form [reflect P b], we can perform case analysis on [b] while at
@@ -1590,7 +1691,17 @@ Fixpoint count n l :=
 Theorem beq_natP_practice : forall n l,
   count n l = 0 -> ~(In n l).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n l.
+  induction l as [|n' l' IHl'].
+  - simpl. intros. intros cont. inversion cont.
+  - simpl. destruct (beq_natP n n') as [H0 | H1].
+    + intros.  inversion H.
+    + simpl. intros. apply IHl' in H. Search (~(_\/_)). intros con.
+      destruct con. 
+      * rewrite H0 in H1. destruct H1. reflexivity.
+      * apply (contradiction_implies_anything (In n l')). split.
+        { apply H0. } { apply H. }
+Qed.
 (** [] *)
 
 (** In this small example, this technique gives us only a rather small
