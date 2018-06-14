@@ -1,7 +1,7 @@
 (** * ProofObjects: The Curry-Howard Correspondence *)
 
 Set Warnings "-notation-overridden,-parsing".
-(*Require Export IndProp.*) 
+Require Export IndProp. 
 
 (** "_Algorithms are the computational content of proofs_."  --Robert Harper *)
 
