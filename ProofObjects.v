@@ -1,7 +1,7 @@
 (** * ProofObjects: The Curry-Howard Correspondence *)
 
 Set Warnings "-notation-overridden,-parsing".
-Require Export IndProp.
+(*Require Export IndProp.*) 
 
 (** "_Algorithms are the computational content of proofs_."  --Robert Harper *)
 
@@ -35,12 +35,12 @@ Require Export IndProp.
     Answer: They are types! *)
 
 (** Look again at the formal definition of the [ev] property.  *)
-
-Print ev.
-(* ==>
   Inductive ev : nat -> Prop :=
     | ev_0 : ev 0
     | ev_SS : forall n, ev n -> ev (S (S n)).
+Print ev.
+(* ==>
+
 *)
 
 (** Suppose we introduce an alternative pronunciation of "[:]".
@@ -92,6 +92,7 @@ Print ev_4.
 Check (ev_SS 2 (ev_SS 0 ev_0)).
 (* ===> ev 4 *)
 
+Check (ev_SS 0 ev_0).
 (** The expression [ev_SS 2 (ev_SS 0 ev_0)] can be thought of as
     instantiating the parameterized constructor [ev_SS] with the
     specific arguments [2] and [0] plus the corresponding proof
@@ -175,10 +176,10 @@ Print ev_4'''.
 
 Theorem ev_8 : ev 8.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply (ev_SS 6 (ev_SS 4 (ev_SS 2 (ev_SS 0 ev_0)))).
+Qed.
 
-Definition ev_8' : ev 8 
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition ev_8' : ev 8 :=ev_SS 6 (ev_SS 4 (ev_SS 2 (ev_SS 0 ev_0))).
 (** [] *)
 
 (* ################################################################# *)
@@ -378,9 +379,13 @@ Definition and_comm' P Q : P /\ Q <-> Q /\ P :=
 (** **** Exercise: 2 stars, optional (conj_fact)  *)
 (** Construct a proof object demonstrating the following proposition. *)
 
-Definition conj_fact : forall P Q R, P /\ Q -> Q /\ R -> P /\ R 
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
-(** [] *)
+Definition conj_fact : forall P Q R, P /\ Q -> Q /\ R -> P /\ R :=
+    fun P Q R => fun(H: P/\Q) => fun(H1:Q/\R)=>
+        match H with
+         | conj HP HQ => match H1 with
+                                    | conj HQ' HR => conj HP HR
+                                   end
+         end.
 
 
 
@@ -408,8 +413,13 @@ End Or.
 (** Try to write down an explicit proof object for [or_commut] (without
     using [Print] to peek at the ones we already defined!). *)
 
-Definition or_comm : forall P Q, P \/ Q -> Q \/ P 
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Check or_introl.
+Check (or True False).
+Definition or_comm : forall P Q, P \/ Q -> Q \/ P := 
+  fun P Q => fun (H:P \/ Q) => match H with
+              | or_introl HP => or_intror HP
+              | or_intror HQ => or_introl HQ
+              end.
 (** [] *)
 
 (** ** Existential Quantification
@@ -424,6 +434,8 @@ Inductive ex {A : Type} (P : A -> Prop) : Prop :=
 | ex_intro : forall x : A, P x -> ex P.
 
 End Ex.
+Print  ev.
+
 
 (** This may benefit from a little unpacking.  The core definition is
     for a type former [ex] that can be used to build propositions of
@@ -444,12 +456,16 @@ Check ex (fun n => ev n).
 Definition some_nat_is_even : exists n, ev n :=
   ex_intro ev 4 (ev_SS 2 (ev_SS 0 ev_0)).
 
+Check ev 4.
 (** **** Exercise: 2 stars, optional (ex_ev_Sn)  *)
 (** Complete the definition of the following proof object: *)
+Print ex.
 
-Definition ex_ev_Sn : ex (fun n => ev (S n)) 
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
-(** [] *)
+Check ex_intro (fun n=> ev (S n)). 
+
+Check  ex (fun n => ev (S n)).
+Definition ex_ev_Sn : ex (fun n => ev (S n)) := 
+    ex_intro (fun n=> ev (S n)) 3  (ev_SS 2 (ev_SS 0 ev_0)) .
 
 (* ================================================================= *)
 (** ** [True] and [False] *)
@@ -525,9 +541,10 @@ Qed.
 Definition four' : 2 + 2 = 1 + 3 :=
   eq_refl 4.
 
+(*
 Definition singleton : forall (X:Type) (x:X), []++[x] = x::[]  :=
   fun (X:Type) (x:X) => eq_refl [x].
-
+*)
 End MyEquality.
 
 
@@ -539,8 +556,10 @@ End MyEquality.
 Lemma equality__leibniz_equality : forall (X : Type) (x y: X),
   x = y -> forall P:X->Prop, P x -> P y.
 Proof.
-(* FILL IN HERE *) Admitted.
-(** [] *)
+  intros X x y H P x'.
+  rewrite H in x'.
+  apply x'.
+Qed.
 
 (** **** Exercise: 5 stars, optional (leibniz_equality__equality)  *)
 (** Show that, in fact, the inductive definition of equality is
@@ -549,8 +568,10 @@ Proof.
 Lemma leibniz_equality__equality : forall (X : Type) (x y: X),
   (forall P:X->Prop, P x -> P y) -> x = y.
 Proof.
-(* FILL IN HERE *) Admitted.
-(** [] *)
+  intros X x y  H.
+Check (eq_refl  x ).
+Abort.
+  
 
 (* ================================================================= *)
 (** ** Inversion, Again *)
