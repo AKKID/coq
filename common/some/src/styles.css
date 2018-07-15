@@ -1,0 +1,102 @@
+/* You can add global styles to this file, and also import other style files */
+/* Application-wide Styles */
+h1 {
+    color: #369;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 250%;
+  }
+  h2, h3 {
+    color: #444;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: lighter;
+  }
+  body {
+    margin: 2em;
+  }
+  body, input[text], button {
+    color: #888;
+    font-family: Cambria, Georgia;
+  }
+  /* everywhere else */
+  * {
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  
+  .sp a {
+    padding: 5px 10px;
+    margin-left:1em;
+    text-decoration: none;
+    margin-top: 10px;
+    display: inline-block;
+    background-color: #eee;
+    border-radius: 4px;
+  }
+ .sp a:visited, a:link {
+    color: #607d8b;
+  }
+ .sp a:hover {
+    color: #039be5;
+    background-color: #cfd8dc;
+  }
+ .sp a.active {
+    color: #039be5;
+  }
+
+
+  .slider {
+    float: left;
+    /* margin-top: 1em; */
+    background-color:white;
+    width:120px;
+    height: auto;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.slider a {
+    color: #888;
+    text-decoration: none;
+    position: relative;
+    display: block;
+    width: 250px;
+  }
+  
+  .slider a:hover {
+    color:#607D8B;
+  }
+  
+  .slider .badge {
+    display: inline-block;
+    font-size: small;
+    color: white;
+    padding: 0.8em 0.7em 0 0.7em;
+    background-color: #607D8B;
+    line-height: 1em;
+    position: relative;
+    left: -1px;
+    top: -4px;
+    height: 1.8em;
+    min-width: 16px;
+    text-align: left;
+    margin-right: .8em;
+    border-radius: 4px 0 0 4px;
+    margin-left:0;
+    width:200px;
+  }
+  ul {
+      margin:0;
+  }
+  li {
+      list-style: none;
+      margin-left: 0;
+      
+  }
+  .content {
+    position: relative;
+
+    background-color: #607D8B;
+      /* margin-top:1em; */
+      top: -4px;
+      margin-left:240px;
+      width:900px;
+      height:800px;
+  }

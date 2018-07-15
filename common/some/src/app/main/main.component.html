@@ -1,0 +1,9 @@
+<h2>All Cases</h2>
+<ul class="heroes">
+  <li *ngFor="let case of cases">
+    <a routerLink="/detail/{{case.id}}">
+      <span class="badge">{{case.id}}</span> {{case.name}}
+    </a>
+  </li>
+</ul>
+
